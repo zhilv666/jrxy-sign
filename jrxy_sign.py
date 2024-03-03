@@ -9,7 +9,7 @@ import re
 import json
 import traceback
 from datetime import datetime
-from notify import wecom_bot
+# from notify import wecom_bot
 
 import requests
 
@@ -318,4 +318,4 @@ if __name__ == '__main__':
     # print(json.dumps(config))
     for conf in config:
         JRXY_SIGN(conf).main()
-    wecom_bot("今日校园-签到", text)
+    # wecom_bot("今日校园-签到", text)
