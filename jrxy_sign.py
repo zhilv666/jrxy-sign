@@ -312,8 +312,8 @@ if __name__ == '__main__':
         "sessionToken": "",
         "MOD_AUTH_CAS": "",
         # 选填项
-        "server_url": "",  # 服务器地址
-        "schoolCode": "",  # 学校code
+        "server_url": "",
+        "schoolCode": "",
     }]
     # print(json.dumps(config))
     for conf in config:
