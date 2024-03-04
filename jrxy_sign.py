@@ -9,11 +9,13 @@ import re
 import json
 import traceback
 from datetime import datetime
-# from notify import wecom_bot
+from notify import wecom_bot
 
 import requests
 
 text = ""
+
+
 class JRXY_SIGN:
     def __init__(self, _config):
         """
@@ -161,30 +163,26 @@ class JRXY_SIGN:
                 'appId': "amp-ios-12758",
                 'accessToken': self.config['msgAccessToken']
             })
-        if response.json()['page']['size'] == 2:
-            msg = response.json()['msgsNew']
-            msgsNew = {
-                "yesterday": {
-                    "date": re.findall("签到截止时间：(.*?)</p>", msg[-2]['content'])[0],
-                    "wid": {
-                        "signInstanceWid": re.findall("&signInstanceWid=(.*?)&from=push", msg[-2]['mobileUrl'])[0],
-                        "signWid": re.findall("&signWid=(.*?)&signInstanceWid", msg[-2]['mobileUrl'])[0],
-                    },
-                    "isHandled": msg[-2]['isHandled'],
+        msg = response.json()['msgsNew']
+        msgsNew = {
+            "yesterday": {
+                "date": re.findall("签到截止时间：(.*?)</p>", msg[-2]['content'])[0],
+                "wid": {
+                    "signInstanceWid": re.findall("&signInstanceWid=(.*?)&from=push", msg[-2]['mobileUrl'])[0],
+                    "signWid": re.findall("&signWid=(.*?)&signInstanceWid", msg[-2]['mobileUrl'])[0],
                 },
-                "today": {
-                    "date": re.findall("签到截止时间：(.*?)</p>", msg[-1]['content'])[0],
-                    "wid": {
-                        "signInstanceWid": re.findall("&signInstanceWid=(.*?)&from=push", msg[-1]['mobileUrl'])[0],
-                        "signWid": re.findall("&signWid=(.*?)&signInstanceWid", msg[-1]['mobileUrl'])[0],
-                    },
-                    "isHandled": msg[-1]['isHandled'],
-                }
+                "isHandled": msg[-2]['isHandled'],
+            },
+            "today": {
+                "date": re.findall("签到截止时间：(.*?)</p>", msg[-1]['content'])[0],
+                "wid": {
+                    "signInstanceWid": re.findall("&signInstanceWid=(.*?)&from=push", msg[-1]['mobileUrl'])[0],
+                    "signWid": re.findall("&signWid=(.*?)&signInstanceWid", msg[-1]['mobileUrl'])[0],
+                },
+                "isHandled": msg[-1]['isHandled'],
             }
-            self.config['msgsNew'] = msgsNew
-        else:
-            time.sleep(600)
-            self.get_wid()
+        }
+        self.config['msgsNew'] = msgsNew
 
     @exception_capture(exception_method)
     def enc_data(self):
@@ -302,6 +300,7 @@ class JRXY_SIGN:
         now = str(datetime.now()).replace(" ", "_").replace(":", "-")[:-7]
         with open("./log/jrxy_sign.logs", mode="a") as f:
             f.write(f"{now} | info | {json.dumps(self.config)} \n\n")
+
 
 
 if __name__ == '__main__':
