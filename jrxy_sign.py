@@ -10,10 +10,53 @@ import json
 import traceback
 from datetime import datetime
 from notify import wecom_bot
-
 import requests
 
 text = ""
+
+
+def exception_capture(_exception_method):
+    """
+    异常装饰器
+    @param _exception_method: 捕获异常的方法
+    @return: 内部函数名
+    """
+
+    def capture(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                _exception_method(func, e, args, kwargs)
+
+        return wrapper
+
+    return capture
+
+
+def exception_method(_func, e, args, kwargs):
+    """
+    获取捕获的异常信息
+    @param _func: 函数签名
+    @param e: 异常
+    @param args: 参数
+    @param kwargs: 其他参数
+    @return:
+    """
+    task_log = {
+        "Function:": _func.__name__,
+        "Exception:": e,
+        "Traceback": traceback.format_exc(),
+        "Parameters:": [param.name for param in list(inspect.signature(_func).parameters.values())],
+        "Docstring:": inspect.getdoc(_func),
+        "args": args,
+        "kwargs": kwargs,
+    }
+    print(task_log)
+    now = str(datetime.now()).replace(" ", "_").replace(":", "-")[:-7]
+    with open("./log/jrxy_sign.logs", mode='a', encoding="utf-8") as f:
+        f.write(f"{now} | error | {'; '.join([f'{key}: {task_log[key]}' for key in task_log])}\n\n")
+    sys.exit()
 
 
 class JRXY_SIGN:
@@ -49,50 +92,6 @@ class JRXY_SIGN:
         _md5 = hashlib.md5()
         _md5.update(_str.encode())
         return _md5.hexdigest()
-
-    @staticmethod
-    def exception_capture(_exception_method):
-        """
-        异常装饰器
-        @param _exception_method: 捕获异常的方法
-        @return: 内部函数名
-        """
-
-        def capture(func):
-            def wrapper(*args, **kwargs):
-                try:
-                    return func(*args, **kwargs)
-                except Exception as e:
-                    _exception_method(func, e, args, kwargs)
-
-            return wrapper
-
-        return capture
-
-    @staticmethod
-    def exception_method(_func, e, args, kwargs):
-        """
-        获取捕获的异常信息
-        @param _func: 函数签名
-        @param e: 异常
-        @param args: 参数
-        @param kwargs: 其他参数
-        @return:
-        """
-        task_log = {
-            "Function:": _func.__name__,
-            "Exception:": e,
-            "Traceback": traceback.format_exc(),
-            "Parameters:": [param.name for param in list(inspect.signature(_func).parameters.values())],
-            "Docstring:": inspect.getdoc(_func),
-            "args": args,
-            "kwargs": kwargs,
-        }
-        print(task_log)
-        now = str(datetime.now()).replace(" ", "_").replace(":", "-")[:-7]
-        with open("./log/jrxy_sign.logs", mode='a', encoding="utf-8") as f:
-            f.write(f"{now} | error | {'; '.join([f'{key}: {task_log[key]}' for key in task_log])}\n\n")
-        sys.exit()
 
     @exception_capture(exception_method)
     def log(self, s=None):
@@ -286,8 +285,10 @@ class JRXY_SIGN:
                 'Content-Type': "application/json",
                 'Cookie': f"MOD_AUTH_CAS={self.config['MOD_AUTH_CAS']}"
             })
-        if response.json()['message']:
-            self.log("{" + "; ".join([f"{key}: {response.json()[key]}" for key in response.json()]) + "}")
+        if response.json()['message'] == "SUCCESS":
+            self.log("签到成功")
+        print(response.json())
+        # self.log("{" + "; ".join([f"{key}: {response.json()[key]}" for key in response.json()]) + "}")
 
     @exception_capture(exception_method)
     def main(self):
