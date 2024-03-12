@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 import hashlib
-import inspect
 import os
 import sys
 import time
