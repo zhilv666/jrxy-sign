@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 import hashlib
+import inspect
 import os
 import sys
 import time
 import re
 import json
 import traceback
+from datetime import datetime
 from notify import wecom_bot
 import requests
 
@@ -41,6 +43,7 @@ def exception_method(_func, e, args, kwargs):
     @param kwargs: 其他参数
     @return:
     """
+    print(e)
     traceback.print_exc()
     sys.exit()
 
@@ -209,6 +212,20 @@ class JRXY_SIGN:
         if response.status_code == 200:
             json_data = response.json()
             if markings in "before":
+                response2 = self.send(
+                    self.detail_url,
+                    json=self.config['msgsNew']['today']['wid'],
+                    headers={
+                        'User-Agent': "Mozilla/5.0 (Linux; Android 9; LLD-TL10 Build/HONORLLD-TL10; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/79.0.3945.116 Mobile Safari/537.36 cpdaily/9.5.0 wisedu/9.5.0",
+                        'Content-Type': "application/json",
+                        'Cookie': f"MOD_AUTH_CAS={self.config['MOD_AUTH_CAS']}"
+                    })
+                if response2.status_code == 200:
+                    json_data2 = response2.json()
+                    if json_data2["datas"]['signTime'].split(" ")[0] == str(datetime.today()).split(" ")[0]:
+                        self.log("已经签到过了")
+                        self.log(f"上次签到时间为{json_data2['datas']['signTime']}")
+                        sys.exit()
                 signedStuInfo = {
                     "userWid": json_data['datas']['signedStuInfo']['userWid'],
                     "userId": json_data['datas']['signedStuInfo']['userId'],
@@ -224,7 +241,6 @@ class JRXY_SIGN:
                         "building": json_data['datas']['signedStuInfo']['stuDormitoryVo']['building'],
                         "room": json_data['datas']['signedStuInfo']['stuDormitoryVo']['room'],
                     },
-                    "signTime": json_data["datas"]["signTime"],
                 }
                 self.config['signedStuInfo'] = signedStuInfo
                 bodyJson = {
@@ -244,10 +260,6 @@ class JRXY_SIGN:
                     } for extra in json_data["datas"]["signedStuInfo"]["extraFieldItemVos"]]
                 }
                 self.config['bodyJson'] = bodyJson
-                if signedStuInfo['signTime']:
-                    self.log("已经签到过了")
-                    self.log(f"上次签到时间为{signedStuInfo['signTime']}")
-                    sys.exit()
             elif markings in "after":
                 json_data = response.json()
                 sign_info = {
@@ -260,7 +272,7 @@ class JRXY_SIGN:
                     "changeActorName": json_data['datas']['changeActorName'],
                 }
                 self.config['sign_info'] = sign_info
-
+                print(json_data)
 
     @exception_capture(exception_method)
     def submit(self):
