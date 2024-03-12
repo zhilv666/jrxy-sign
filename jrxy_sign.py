@@ -43,19 +43,7 @@ def exception_method(_func, e, args, kwargs):
     @param kwargs: 其他参数
     @return:
     """
-    task_log = {
-        "Function:": _func.__name__,
-        "Exception:": e,
-        "Traceback": traceback.format_exc(),
-        "Parameters:": [param.name for param in list(inspect.signature(_func).parameters.values())],
-        "Docstring:": inspect.getdoc(_func),
-        "args": args,
-        "kwargs": kwargs,
-    }
-    print(task_log)
-    now = str(datetime.now()).replace(" ", "_").replace(":", "-")[:-7]
-    with open("./log/jrxy_sign.logs", mode='a', encoding="utf-8") as f:
-        f.write(f"{now} | error | {'; '.join([f'{key}: {task_log[key]}' for key in task_log])}\n\n")
+    traceback.print_exc()
     sys.exit()
 
 
@@ -238,6 +226,7 @@ class JRXY_SIGN:
                         "building": json_data['datas']['signedStuInfo']['stuDormitoryVo']['building'],
                         "room": json_data['datas']['signedStuInfo']['stuDormitoryVo']['room'],
                     },
+                    "signTime": json_data["datas"]["signTime"],
                 }
                 self.config['signedStuInfo'] = signedStuInfo
                 bodyJson = {
@@ -257,6 +246,10 @@ class JRXY_SIGN:
                     } for extra in json_data["datas"]["signedStuInfo"]["extraFieldItemVos"]]
                 }
                 self.config['bodyJson'] = bodyJson
+                if signedStuInfo['signTime']:
+                    self.log("已经签到过了")
+                    self.log(f"上次签到时间为{signedStuInfo['signTime']}")
+                    sys.exit()
             elif markings in "after":
                 json_data = response.json()
                 sign_info = {
@@ -269,6 +262,7 @@ class JRXY_SIGN:
                     "changeActorName": json_data['datas']['changeActorName'],
                 }
                 self.config['sign_info'] = sign_info
+
 
     @exception_capture(exception_method)
     def submit(self):
@@ -298,10 +292,6 @@ class JRXY_SIGN:
         self.enc_data()
         self.submit()
         self.get_detail(markings="after")
-        now = str(datetime.now()).replace(" ", "_").replace(":", "-")[:-7]
-        with open("./log/jrxy_sign.logs", mode="a") as f:
-            f.write(f"{now} | info | {json.dumps(self.config)} \n\n")
-
 
 
 if __name__ == '__main__':
