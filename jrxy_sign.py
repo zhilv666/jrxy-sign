@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 import hashlib
+import inspect
 import os
 import sys
 import time
@@ -221,7 +222,7 @@ class JRXY_SIGN:
                     })
                 if response2.status_code == 200:
                     json_data2 = response2.json()
-                    if json_data2["datas"]['signTime'].split(" ")[0] == str(datetime.today()).split(" ")[0]:
+                    if json_data2["datas"]['signTime']:
                         self.log("已经签到过了")
                         self.log(f"上次签到时间为{json_data2['datas']['signTime']}")
                         sys.exit()
